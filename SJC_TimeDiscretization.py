@@ -36,7 +36,7 @@ def RungeKutta54_LS(U, TimeStep, Eq, Mesh, Poly):
         2802321613138.0/2924317926251.0]
     ResU = zeros(U.shape)
     for Ind in range(5):
-        dF = Eq.getContinuousFlux(Mesh, Poly)
+        dF = Eq.getdF(Eq.ArtDiffuFlag, Mesh, Poly)
         ResU = CoefA_Vec[Ind] * ResU - TimeStep * (-dF)
         U = U - CoefB_Vec[Ind] * ResU
         Eq.update(U)

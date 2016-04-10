@@ -59,3 +59,6 @@ class Poly(object):
         Temp_Vec = self.getRadauRightPoly()
         return -Temp_Vec[::-1]
 
+    def getVandermondeLegendre(self):
+        from numpy.polynomial.legendre import legvander
+        return legvander(self.Nodes, self.Order)

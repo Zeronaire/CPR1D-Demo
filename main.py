@@ -20,7 +20,9 @@ Global_Mat = XMesh.getGlobalCoordinates()
 
 SJCPoly = Poly(Local_Vec)
 
-IC_Flag = 2 # Shifted Sine Wave
+# 2: Shifted Sine Wave;
+# 3: Square Jump
+IC_Flag = 3
 U0_Mat = setIC(Global_Mat, IC_Flag)
 
 ConvA = 20.0
@@ -28,7 +30,14 @@ CFL = 5E-2
 TimeStep = CFL * XMesh.getCellSize() / ConvA
 TimeEnd = 1.0 / ConvA
 
-Eq = ConvectionEq(XMesh, U0_Mat, ConvA)
+if IC_Flag == 3:
+    ArtDiffuFlag = 1
+elif IC_Flag == 2:
+    ArtDiffuFlag = 0
+else:
+    exit('IC Flag Error!')
+
+Eq = ConvectionEq(Global_Mat, U0_Mat, ConvA, ArtDiffuFlag)
 
 TimeInd = 0
 Time = 0.0
@@ -37,14 +46,14 @@ while (Time < TimeEnd):
     Time = TimeInd * TimeStep
     if Time > TimeEnd:
         Time = TimeEnd
-    # U_Mat = EulerForward(U_Mat, TimeStep, Eq, XMesh, SJCPoly)
-    U_Mat = RungeKutta54_LS(U_Mat, TimeStep, Eq, XMesh, SJCPoly)
     if mod(TimeInd, 10) == 0:
         print(('%.4f' % Time) + ' / ' + ('%.4f' % TimeEnd))
-        plt.plot(Global_Mat, U_Mat, '-')
+        plt.plot(Global_Mat, U_Mat, '.-')
         FigName_Str = ('%.4f' % Time) + '.jpg'
         plt.savefig(FigName_Str)
         plt.clf()
+    # U_Mat = EulerForward(U_Mat, TimeStep, Eq, XMesh, SJCPoly)
+    U_Mat = RungeKutta54_LS(U_Mat, TimeStep, Eq, XMesh, SJCPoly)
     if amax(U_Mat) > 1E3:
         exit('Divergence!')
     TimeInd = TimeInd + 1

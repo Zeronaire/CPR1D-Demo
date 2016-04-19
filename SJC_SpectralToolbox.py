@@ -49,15 +49,27 @@ class Poly(object):
         from numpy import insert
         ###########################################################
         # Construct Right Radau Polynomial
+        Temp1 = legendre(self.Order).coeffs
+        Temp2 = legendre(self.Order+1).coeffs
+        RadauRPoly_Vec = (-1)**self.Order / 2.0 * (insert(Temp1, 0, 0) - Temp2)
+        RadauRPolyValue_Vec = polyval(self.Nodes, RadauR_Vec[::-1])
+        return RadauRPolyValue_Vec
+
+    def getRadauRightPolyDeriv(self):
+        from scipy.special import legendre
+        from numpy.polynomial.polynomial import polyval
+        from numpy import insert
+        ###########################################################
+        # Construct Right Radau Polynomial
         Temp1 = legendre(self.Order).deriv(1).coeffs
         Temp2 = legendre(self.Order+1).deriv(1).coeffs
-        RadauR_Vec = (-1)**self.Order / 2.0 * (insert(Temp1, 0, 0) - Temp2)
-        RadauRPoly_Vec = polyval(self.Nodes, RadauR_Vec[::-1])
-        return RadauRPoly_Vec
+        RadauRPolyDeriv_Vec = (-1)**self.Order / 2.0 * (insert(Temp1, 0, 0) - Temp2)
+        RadauRPolyDerivValue_Vec = polyval(self.Nodes, RadauRPolyDeriv_Vec[::-1])
+        return RadauRPolyDerivValue_Vec
 
-    def getRadauLeftPoly(self):
-        Temp_Vec = self.getRadauRightPoly()
-        return -Temp_Vec[::-1]
+    def getRadauLeftPolyDeriv(self):
+        RadauRPolyDerivValue_Vec = self.getRadauRightPolyDeriv()
+        return -RadauRPolyDerivValue_Vec[::-1]
 
     def getVandermondeLegendre(self):
         from numpy.polynomial.legendre import legvander

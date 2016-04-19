@@ -7,12 +7,12 @@ def EulerForward(U, TimeStep, Eq, Mesh, Poly):
     #######################################################
     # u^{n+1} = u^{n} + \DeltaT * dF, dF = -f_x
     #######################################################
-    dF = Eq.getContinuousFlux(Mesh, Poly)
+    dF = Eq.getdF(Eq.ArtDiffuFlag, Mesh, Poly)
     U = U + TimeStep * (-dF)
     Eq.update(U)
     return U
 #==========================================================
-def RungeKutta54_LS(U, TimeStep, Eq, Mesh, Poly):
+def RungeKutta54_LS(U, TimeStep, Eq, Mesh, Poly, t):
     from numpy import zeros
     #######################################################
     # Reference:
@@ -39,5 +39,5 @@ def RungeKutta54_LS(U, TimeStep, Eq, Mesh, Poly):
         dF = Eq.getdF(Eq.ArtDiffuFlag, Mesh, Poly)
         ResU = CoefA_Vec[Ind] * ResU - TimeStep * (-dF)
         U = U - CoefB_Vec[Ind] * ResU
-        Eq.update(U)
+        Eq.update(U, t)
     return U

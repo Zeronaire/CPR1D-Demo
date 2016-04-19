@@ -1,17 +1,17 @@
 from SJC_Mesh import Mesh1D
 from SJC_SpectralToolbox import Poly
 from IC import setIC
-from SJC_Equation import ConvectionEq
-from SJC_TimeDiscretization import EulerForward, RungeKutta54_LS
-from numpy import mod, amax
-from sys import exit
+# from SJC_Equation import ConvectionLinearEq
+from SJC_Equation import ConvectionNonlinearEq
+from SJC_TimeDiscretization import RungeKutta54_LS
+from numpy import mod, save, load, arange, where, sin, pi
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 ###########################################################
 
-Range = [-1.0, 1.0]
-OrderNMAX = 8
-CellNMAX = 80
+Range = [-0.5, 0.5]
+OrderNMAX = 4
+CellNMAX = 40
 QuadType = 'LGL'
 
 XMesh = Mesh1D(Range, OrderNMAX, CellNMAX, QuadType)
@@ -20,40 +20,38 @@ Global_Mat = XMesh.getGlobalCoordinates()
 
 SJCPoly = Poly(Local_Vec)
 
-# 2: Shifted Sine Wave;
+# 1: Sine Wave
+# 2: Quadratic Polynomial
 # 3: Square Jump
-IC_Flag = 3
+IC_Flag = 2
 U0_Mat = setIC(Global_Mat, IC_Flag)
-
-ConvA = 20.0
+ConvA = 1.0 # Needs correction for nonlinear case
 CFL = 5E-2
-TimeStep = CFL * XMesh.getCellSize() / ConvA
-TimeEnd = 1.0 / ConvA
-
-if IC_Flag == 3:
-    ArtDiffuFlag = 1
-elif IC_Flag == 2:
-    ArtDiffuFlag = 0
-else:
-    exit('IC Flag Error!')
-
-Eq = ConvectionEq(Global_Mat, U0_Mat, ConvA, ArtDiffuFlag)
-
-TimeInd = 0
+TimeStep = CFL * XMesh.getCellSize() / abs(ConvA)
+TimeEnd = (Range[1] - Range[0]) / ConvA
+# TimeEnd = 1.0 / (4.0 * Range[1])
 Time = 0.0
+TimeInd = 0
 U_Mat = U0_Mat
+
+ArtDiffuFlag = 0
+# Eq = ConvectionLinearEq(Global_Mat, U0_Mat, ConvA, ArtDiffuFlag)
+Eq = ConvectionNonlinearEq(Global_Mat, U0_Mat, ArtDiffuFlag, Time)
+
+Plot_YMin = -1.1
+Plot_YMax = 1.1
 while (Time < TimeEnd):
     Time = TimeInd * TimeStep
     if Time > TimeEnd:
         Time = TimeEnd
-    if mod(TimeInd, 10) == 0:
-        print(('%.4f' % Time) + ' / ' + ('%.4f' % TimeEnd))
+    if mod(TimeInd, 1) == 0:
+        print(('%.4d' % TimeInd) + ': ' + ('%.4f' % Time) + ' / ' + ('%.4f' % TimeEnd))
         plt.plot(Global_Mat, U_Mat, '.-')
-        FigName_Str = ('%.4f' % Time) + '.jpg'
+        plt.axis(( Range[0], Range[1], Plot_YMin, Plot_YMax ))
+        FigName_Str = ('%03d' % TimeInd) + '.jpg'
         plt.savefig(FigName_Str)
         plt.clf()
-    # U_Mat = EulerForward(U_Mat, TimeStep, Eq, XMesh, SJCPoly)
-    U_Mat = RungeKutta54_LS(U_Mat, TimeStep, Eq, XMesh, SJCPoly)
-    if amax(U_Mat) > 1E3:
+    U_Mat = RungeKutta54_LS(U_Mat, TimeStep, Eq, XMesh, SJCPoly, Time)
+    if U_Mat.max() > 1E3:
         exit('Divergence!')
     TimeInd = TimeInd + 1
